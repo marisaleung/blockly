@@ -45,7 +45,7 @@ goog.require('goog.string');
 Blockly.FieldVariable = function(varname, opt_validator) {
   Blockly.FieldVariable.superClass_.constructor.call(this,
       Blockly.FieldVariable.dropdownCreate, opt_validator);
-  this.setValue(varname || '');
+  this.defaultVarname = varname;
 };
 goog.inherits(Blockly.FieldVariable, Blockly.FieldDropdown);
 
@@ -58,7 +58,7 @@ Blockly.FieldVariable.prototype.init = function() {
     return;
   }
   Blockly.FieldVariable.superClass_.init.call(this);
-
+  this.setValue(this.defaultVarname);
   // TODO (1010): Change from init/initModel to initView/initModel
   this.initModel();
 };
@@ -101,14 +101,31 @@ Blockly.FieldVariable.prototype.getValue = function() {
 
 /**
  * Set the variable name.
- * @param {string} newValue New text.
+ * @param {string} newValueId Id of the new value.
  */
-Blockly.FieldVariable.prototype.setValue = function(newValue) {
+Blockly.FieldVariable.prototype.setValue = function(newValueId) {
+  try {
+    var variable = this.sourceBlock_.workspace.getVariableById(newValueId);
+    // Call any validation function, and allow it to override.
+    var newValue = this.callValidator(variable.name);
+  }
+  catch (TypeError) {
+    var error_msg;
+    if (this.sourceBlock_) {
+      error_msg = ('Variable with the id \'' + newValueId + '\' could not be ' +
+                   'found in the VariableMap.');
+    }
+    else {
+      error_msg = ('Variable with the id \'' + newValueId + '\' could not be ' +
+                   'found because sourceBlock_ is undefined.');
+    }
+    throw Error(error_msg);
+  }
   if (this.sourceBlock_ && Blockly.Events.isEnabled()) {
     Blockly.Events.fire(new Blockly.Events.Change(
         this.sourceBlock_, 'field', this.name, this.value_, newValue));
   }
-  this.value_ = newValue;
+  this.value_ = newValueId;
   this.setText(newValue);
 };
 

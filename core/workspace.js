@@ -243,6 +243,9 @@ Blockly.Workspace.prototype.updateVariableStore = function(clear) {
  */
 Blockly.Workspace.prototype.renameVariableInternal_ = function(variable, newName) {
   var newVariable = this.getVariable(newName);
+  if (variable) {
+    var oldName = variable.name;
+  }
   var oldCase;
 
   // If they are different types, throw an error.
@@ -256,19 +259,19 @@ Blockly.Workspace.prototype.renameVariableInternal_ = function(variable, newName
   if (newVariable && newVariable.name != newName) {
     oldCase = newVariable.name;
   }
+  this.variableMap_.renameVariable(variable, newName);
+  var newVariableName = this.variableMap_.getVariable(newName);
 
   Blockly.Events.setGroup(true);
   var blocks = this.getAllBlocks();
   // Iterate through every block and update name.
   for (var i = 0; i < blocks.length; i++) {
-    blocks[i].renameVar(variable.name, newName);
+    blocks[i].renameVar(oldName, newVariableName.getId());
     if (oldCase) {
-      blocks[i].renameVar(oldCase, newName);
+      blocks[i].renameVar(oldCase, newVariableName.getId());
     }
   }
   Blockly.Events.setGroup(false);
-
-  this.variableMap_.renameVariable(variable, newName);
 };
 
 
