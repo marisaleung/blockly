@@ -658,7 +658,7 @@ Blockly.Block.prototype.getVars = function() {
   for (var i = 0, input; input = this.inputList[i]; i++) {
     for (var j = 0, field; field = input.fieldRow[j]; j++) {
       if (field instanceof Blockly.FieldVariable) {
-        vars.push(field.getValue());
+        vars.push(field.getText());
       }
     }
   }
@@ -675,8 +675,13 @@ Blockly.Block.prototype.renameVar = function(oldName, newName) {
   for (var i = 0, input; input = this.inputList[i]; i++) {
     for (var j = 0, field; field = input.fieldRow[j]; j++) {
       if (field instanceof Blockly.FieldVariable &&
-          Blockly.Names.equals(oldName, field.getValue())) {
-        field.setValue(newName);
+          Blockly.Names.equals(oldName, field.getText())) {
+        if (this.workspace) {
+          var variable = this.workspace.getVariable(newName);
+          if (variable) {
+            field.setValue(variable.getId());
+          }
+        }
       }
     }
   }

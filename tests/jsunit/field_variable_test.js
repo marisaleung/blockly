@@ -54,6 +54,7 @@ function test_fieldVariable_Constructor() {
 function test_fieldVariable_setValueMatchId() {
  // Expect the fieldVariable value to be set to variable name
   fieldVariableTestWithMocks_setUp();
+  workspace.createVariable('name1', null, 'id1');
   workspace.createVariable('name2', null, 'id2');
   var fieldVariable = new Blockly.FieldVariable('name1');
   var mockBlock = fieldVariable_mockBlock(workspace);
@@ -68,26 +69,9 @@ function test_fieldVariable_setValueMatchId() {
   fieldVariableTestWithMocks_tearDown();
 }
 
-function test_fieldVariable_setValueMatchName() {
-  // Expect the fieldVariable value to be set to variable name
-  fieldVariableTestWithMocks_setUp();
-  workspace.createVariable('name2', null, 'id2');
-  var fieldVariable = new Blockly.FieldVariable('name1');
-  var mockBlock = fieldVariable_mockBlock(workspace);
-  fieldVariable.setSourceBlock(mockBlock);
-  var event = new Blockly.Events.BlockChange(
-        mockBlock, 'field', undefined, 'name1', 'id2');
-  setUpMockMethod(mockControl_, Blockly.Events, 'fire', [event], null);
-
-  fieldVariable.setValue('name2');
-  assertEquals('name2', fieldVariable.getText());
-  assertEquals('id2', fieldVariable.value_);
-  fieldVariableTestWithMocks_tearDown();
-}
-
 function test_fieldVariable_setValueNoVariable() {
-  // Expect the fieldVariable value to be set to the passed in string. No error
-  // should be thrown.
+  // Expect the fieldVariable value remain at 'name1' since the id is an invalid
+  // variable.
   fieldVariableTestWithMocks_setUp();
   var fieldVariable = new Blockly.FieldVariable('name1');
   var mockBlock = {'workspace': workspace,
@@ -98,8 +82,8 @@ function test_fieldVariable_setValueNoVariable() {
   setUpMockMethod(mockControl_, Blockly.Events, 'fire', [event], null);
 
   fieldVariable.setValue('id1');
-  assertEquals('id1', fieldVariable.getText());
-  assertEquals('id1', fieldVariable.value_);
+  assertEquals('name1', fieldVariable.getText());
+  assertEquals('name1', fieldVariable.value_);
   fieldVariableTestWithMocks_tearDown();
 }
 
@@ -240,4 +224,40 @@ function test_fieldVariable_getVariableTypes_emptyListVariableTypes() {
   } finally {
     workspace.dispose();
   }
+}
+
+function test_fieldVariable_initModel_newVariable() {
+  // Expect variable to be added to workspace after initModel is called.
+  fieldVariableTestWithMocks_setUp();
+  setUpMockMethod(mockControl_, Blockly.utils, 'genUid', null, ['id1']);
+  var fieldVariable = new Blockly.FieldVariable('name1');
+  var mockBlock = fieldVariable_mockBlock(workspace);
+  fieldVariable.setSourceBlock(mockBlock);
+  // Check that workspace has no variables
+  isEqualArrays(workspace.getAllVariables(), []);
+
+  fieldVariable.initModel();
+  // Check that variable with correct values was added
+  var allVariables = workspace.getAllVariables();
+  assertEquals(allVariables.length, 1);
+  checkVariableValues(workspace, 'name1', '', 'id1');
+
+  fieldVariableTestWithMocks_tearDown();
+}
+
+function test_fieldVariable_initModel_ExistingVariable() {
+  // Expect the workspace to not add another variable after calling initModel.
+  fieldVariableTestWithMocks_setUp();
+  workspace.createVariable('name1', null, 'id1');
+  var fieldVariable = new Blockly.FieldVariable('name1');
+  var mockBlock = fieldVariable_mockBlock(workspace);
+  fieldVariable.setSourceBlock(mockBlock);
+  fieldVariable.value_ = 'id1';
+
+  fieldVariable.initModel();
+  // Check that variable with correct values was added
+  var allVariables = workspace.getAllVariables();
+  assertEquals(allVariables.length, 1);
+  checkVariableValues(workspace, 'name1', '', 'id1');
+  fieldVariableTestWithMocks_tearDown();
 }

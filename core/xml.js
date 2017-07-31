@@ -107,10 +107,10 @@ Blockly.Xml.blockToDom = function(block, opt_noId) {
   }
   function fieldToDom(field) {
     if (field.name && field.EDITABLE) {
-      var container = goog.dom.createDom('field', null, field.getValue());
+      var container = goog.dom.createDom('field', null, field.getText());
       container.setAttribute('name', field.name);
       if (field instanceof Blockly.FieldVariable) {
-        var variable = block.workspace.getVariable(field.getValue());
+        var variable = block.workspace.getVariableById(field.getValue());
         if (variable) {
           container.setAttribute('id', variable.getId());
           container.setAttribute('variableType', variable.type);
@@ -611,7 +611,7 @@ Blockly.Xml.domToBlockHeadless_ = function(xmlBlock, workspace) {
                        prototypeName);
           break;
         }
-        field.setValue(text);
+        field.setValue(variable.getId());
         break;
       case 'value':
       case 'statement':

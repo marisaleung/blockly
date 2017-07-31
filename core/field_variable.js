@@ -49,7 +49,8 @@ goog.require('goog.string');
 Blockly.FieldVariable = function(varname, opt_validator, opt_variableTypes) {
   Blockly.FieldVariable.superClass_.constructor.call(this,
       Blockly.FieldVariable.dropdownCreate, opt_validator);
-  this.setValue(varname || '');
+  this.value_ = varname;
+  this.setText(varname);
   this.variableTypes = opt_variableTypes;
 };
 goog.inherits(Blockly.FieldVariable, Blockly.FieldDropdown);
@@ -69,7 +70,7 @@ Blockly.FieldVariable.prototype.init = function() {
 };
 
 Blockly.FieldVariable.prototype.initModel = function() {
-  if (!this.getValue()) {
+  if (!this.getText()) {
     // Variables without names get uniquely named for this workspace.
     var workspace =
         this.sourceBlock_.isInFlyout ?
@@ -81,7 +82,7 @@ Blockly.FieldVariable.prototype.initModel = function() {
   // For instance, some blocks in the toolbox have variable dropdowns filled
   // in by default.
   if (!this.sourceBlock_.isInFlyout) {
-    this.sourceBlock_.workspace.createVariable(this.getValue());
+    this.sourceBlock_.workspace.createVariable(this.getText());
   }
 };
 
@@ -101,34 +102,49 @@ Blockly.FieldVariable.prototype.setSourceBlock = function(block) {
  * @return {string} Current text.
  */
 Blockly.FieldVariable.prototype.getValue = function() {
-  return this.getText();
+  return this.value_;
 };
 
 /**
- * Set the variable name.
+ * Find the variable associated with the value. If it is a valid varaible, set
+ *     the text to the name associated with the value.
  * @param {string} value New text.
  */
 Blockly.FieldVariable.prototype.setValue = function(value) {
-  var newValue = value;
   var newText = value;
-
   if (this.sourceBlock_) {
     var variable = this.sourceBlock_.workspace.getVariableById(value);
-    if (variable) {
-      newText = variable.name;
+    if (!variable) {
+      return;
     }
-    // TODO(marisaleung): Remove name lookup after converting all Field Variable
-    //     instances to use id instead of name.
-    else if (variable = this.sourceBlock_.workspace.getVariable(value)) {
-      newValue = variable.getId();
-    }
+    newText = variable.name;
     if (Blockly.Events.isEnabled()) {
       Blockly.Events.fire(new Blockly.Events.BlockChange(
-          this.sourceBlock_, 'field', this.name, this.value_, newValue));
+          this.sourceBlock_, 'field', this.name, this.value_, value));
     }
   }
-  this.value_ = newValue;
   this.setText(newText);
+  this.value_ = value;
+};
+
+/**
+ * Check if the newName is already a variable and change the value. If it is not
+ *     already a variable, just change the text.
+ * @param {string} newName New text.
+ */
+Blockly.FieldVariable.prototype.changeVariable = function(newName) {
+  if (this.sourceBlock_) {
+    var variable;
+    var newValue;
+    if (variable = this.sourceBlock_.workspace.getVariable(newName)) {
+      newValue = variable.getId();
+    }
+    this.setValue(newValue);
+  }
+  else {
+ //   this.setValue(newName);
+    this.setText(newName);
+  }
 };
 
 /**
