@@ -69,21 +69,20 @@ Blockly.FieldVariable.prototype.init = function() {
 };
 
 Blockly.FieldVariable.prototype.initModel = function() {
-  var workspace =
-    this.sourceBlock_.isInFlyout ?
-        this.sourceBlock_.workspace.targetWorkspace :
-        this.sourceBlock_.workspace;
-  if (!this.getValue()) {
+  var isInFlyout = this.sourceBlock_.isInFlyout;
+  var workspace = isInFlyout ?
+      this.sourceBlock_.workspace.targetWorkspace :
+      this.sourceBlock_.workspace;
+  if (this.getValue()) return;
+  if (!isInFlyout) {
     // Variables without names get uniquely named for this workspace.
+    // If this is not in the flyout, create the variable.
     var variable = workspace.createVariable(
       Blockly.Variables.generateUniqueName(workspace));
     this.setValue(variable.getId());
-  }
-  // If the selected variable doesn't exist yet, create it.
-  // For instance, some blocks in the toolbox have variable dropdowns filled
-  // in by default.
-  if (!this.sourceBlock_.isInFlyout) {
-    this.sourceBlock_.workspace.createVariable(this.getText());
+  } else {
+    // If it is in the flyout, it just a placeholder, not a real variable.
+    this.setText(Blockly.Variables.generateUniqueName(workspace));
   }
 };
 
